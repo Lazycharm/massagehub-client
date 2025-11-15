@@ -35,8 +35,9 @@ export default function Login() {
       }
 
       // Store session token in localStorage for client-side access
-      if (data.session?.access_token) {
-        localStorage.setItem('sb-access-token', data.session.access_token);
+      // API returns user data directly, session is in httpOnly cookie
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
       }
 
       // Redirect to dashboard
