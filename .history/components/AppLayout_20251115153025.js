@@ -19,14 +19,14 @@ import {
   LogOut,
   ChevronDown
 } from 'lucide-react';
-import { Button } from '../src/MessageHub/components/ui/button';
+import { Button } from '@/src/MessageHub/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator
-} from '../src/MessageHub/components/ui/dropdown-menu';
+} from '@/src/MessageHub/components/ui/dropdown-menu';
 
 export default function AppLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
