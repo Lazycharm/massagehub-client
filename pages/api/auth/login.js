@@ -30,6 +30,14 @@ export default async function handler(req, res) {
       });
     }
 
+    // Check if session exists
+    if (!authData.session || !authData.session.access_token) {
+      console.error('No session returned from Supabase Auth');
+      return res.status(500).json({ 
+        error: 'Authentication failed - no session created'
+      });
+    }
+
     // Fetch user profile from users table
     const { data: userData, error: userError } = await supabase
       .from('users')
