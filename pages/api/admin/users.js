@@ -3,33 +3,33 @@ import { supabase } from '../../../lib/supabaseClient';
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      // Get all users with their access tokens
-      // Use !user_tokens_user_id_fkey to specify which relationship to use
-      const { data, error } = await supabase
+      // Get all users first
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select(`
-          *,
-          user_tokens!user_tokens_user_id_fkey (
-            id,
-            access_token,
-            is_approved,
-            is_active,
-            assigned_at,
-            expires_at,
-            last_used_at
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (usersError) throw usersError;
 
-      // Transform data to include token info at user level
-      const users = (data || []).map(user => ({
-        ...user,
-        access_token: user.user_tokens?.[0]?.access_token || null,
-        is_approved: user.user_tokens?.[0]?.is_approved ?? user.is_approved ?? false,
-        token_id: user.user_tokens?.[0]?.id || null
-      }));
+      // Get all user tokens
+      const { data: tokensData, error: tokensError } = await supabase
+        .from('user_tokens')
+        .select('*');
+
+      if (tokensError) {
+        console.error('Error fetching tokens:', tokensError);
+      }
+
+      // Map tokens to users
+      const users = (usersData || []).map(user => {
+        const token = (tokensData || []).find(t => t.user_id === user.id);
+        return {
+          ...user,
+          access_token: token?.access_token || null,
+          is_approved: token?.is_approved ?? user.is_approved ?? false,
+          token_id: token?.id || null
+        };
+      });
 
       return res.status(200).json(users);
     } catch (error) {
