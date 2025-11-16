@@ -53,47 +53,70 @@ export default async function handler(req, res) {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Error creating auth user:', authError);
+        throw authError;
+      }
 
       const userId = authData.user.id;
+      console.log('Created auth user:', userId, email);
 
       // 2. Create user record in public.users
       const { data: user, error: userError } = await supabase
         .from('users')
-        .insert([{
+        .insert({
           id: userId, // Use same ID as auth user
           email,
           name: name || full_name,
           full_name: full_name || name,
           role: 'agent',
           is_approved: false
-        }])
+        })
         .select()
         .single();
 
       if (userError) {
+        console.error('Error creating user record:', userError);
         // Rollback: delete auth user if database insert fails
         await supabaseAdmin.auth.admin.deleteUser(userId);
         throw userError;
       }
 
+      console.log('Created user record:', user);
+
       // 3. Generate access token manually (8 characters)
       const accessToken = generateAccessToken();
 
-      // 4. Create token
-      const { data: tokenData, error: tokenError } = await supabase
+      // 4. Create token - Check if already exists first
+      const { data: existingToken } = await supabase
         .from('user_tokens')
-        .insert([{
-          user_id: userId,
-          access_token: accessToken,
-          is_approved: false,
-          is_active: true
-        }])
-        .select()
+        .select('*')
+        .eq('user_id', userId)
         .single();
 
-      if (tokenError) {
-        console.error('Error creating token:', tokenError);
+      let tokenData;
+      if (existingToken) {
+        console.log('Token already exists for user:', userId);
+        tokenData = existingToken;
+      } else {
+        const { data: newToken, error: tokenError } = await supabase
+          .from('user_tokens')
+          .insert({
+            user_id: userId,
+            access_token: accessToken,
+            is_approved: false,
+            is_active: true
+          })
+          .select()
+          .single();
+
+        if (tokenError) {
+          console.error('Error creating token:', tokenError);
+          // Don't rollback for token error - user is already created
+        } else {
+          console.log('Created token:', newToken);
+          tokenData = newToken;
+        }
       }
 
       return res.status(201).json({
