@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       // Get all users with their access tokens
-      // Fix: Specify the relationship explicitly to avoid ambiguity
+      // Use !user_tokens_user_id_fkey to specify which relationship to use
       const { data, error } = await supabase
         .from('users')
         .select(`
