@@ -57,18 +57,30 @@ export default async function handler(req, res) {
 
       if (userError) throw userError;
 
-      // Token will be auto-created by trigger
-      // Fetch the created token
-      const { data: tokenData } = await supabase
+      // Generate access token manually (8 characters)
+      const accessToken = generateAccessToken();
+
+      // Create token manually
+      const { data: tokenData, error: tokenError } = await supabase
         .from('user_tokens')
-        .select('*')
-        .eq('user_id', user.id)
+        .insert([{
+          user_id: user.id,
+          access_token: accessToken,
+          is_approved: false,
+          is_active: true
+        }])
+        .select()
         .single();
+
+      if (tokenError) {
+        console.error('Error creating token:', tokenError);
+        // Don't fail signup if token creation fails
+      }
 
       return res.status(201).json({
         ...user,
-        access_token: tokenData?.access_token,
-        token_id: tokenData?.id
+        access_token: tokenData?.access_token || accessToken,
+        token_id: tokenData?.id || null
       });
     } catch (error) {
       console.error('Error creating user:', error);
@@ -78,6 +90,16 @@ export default async function handler(req, res) {
 
   res.setHeader('Allow', ['GET', 'POST']);
   res.status(405).end(`Method ${req.method} Not Allowed`);
+}
+
+// Generate 8-character access token
+function generateAccessToken() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let token = '';
+  for (let i = 0; i < 8; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
 }
 
 // Simple password hashing (in production, use bcrypt)
