@@ -49,7 +49,7 @@ export default function AppLayout({ children }) {
 
         if (!response.ok) {
           // Not authenticated - redirect to login
-          if (currentPath !== '/Login' && currentPath !== '/Home' && currentPath !== '/') {
+          if (currentPath !== '/Login' && currentPath !== '/Home' && currentPath !== '/' && currentPath !== '/Signup') {
             router.push('/Login');
           }
           setUser(null);
@@ -62,7 +62,7 @@ export default function AppLayout({ children }) {
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch user:', error);
-        if (currentPath !== '/Login' && currentPath !== '/Home' && currentPath !== '/') {
+        if (currentPath !== '/Login' && currentPath !== '/Home' && currentPath !== '/' && currentPath !== '/Signup') {
           router.push('/Login');
         }
         setUser(null);
@@ -73,8 +73,8 @@ export default function AppLayout({ children }) {
     fetchUser();
   }, [currentPath, router]);
 
-  // Don't apply layout to Home page or Login page
-  if (currentPath === '/Home' || currentPath === '/' || currentPath === '/Login') {
+  // Don't apply layout to Home page, Login page, or Signup page
+  if (currentPath === '/Home' || currentPath === '/' || currentPath === '/Login' || currentPath === '/Signup') {
     return <>{children}</>;
   }
 

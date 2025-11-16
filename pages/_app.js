@@ -16,7 +16,7 @@ export default function App({ Component, pageProps }) {
   const router = useRouter();
   
   // Pages that should NOT use AppLayout (have their own full-page layouts)
-  const noLayoutPages = ['/', '/Home', '/Login', '/index'];
+  const noLayoutPages = ['/', '/Home', '/Login', '/Signup', '/index'];
   const useLayout = !noLayoutPages.includes(router.pathname);
 
   return (
