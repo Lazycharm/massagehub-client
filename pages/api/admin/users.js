@@ -42,30 +42,49 @@ export default async function handler(req, res) {
     try {
       const { email, name, full_name, password } = req.body;
 
-      // Create user with 'agent' role (database constraint requires 'admin' or 'agent')
+      // 1. Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true, // Auto-confirm email
+        user_metadata: {
+          full_name: full_name || name,
+          name: name || full_name
+        }
+      });
+
+      if (authError) throw authError;
+
+      const userId = authData.user.id;
+
+      // 2. Create user record in public.users
       const { data: user, error: userError } = await supabase
         .from('users')
         .insert([{
+          id: userId, // Use same ID as auth user
           email,
           name: name || full_name,
           full_name: full_name || name,
-          password_hash: password ? await hashPassword(password) : null,
           role: 'agent',
           is_approved: false
         }])
         .select()
         .single();
 
-      if (userError) throw userError;
+      if (userError) {
+        // Rollback: delete auth user if database insert fails
+        await supabase.auth.admin.deleteUser(userId);
+        throw userError;
+      }
 
-      // Generate access token manually (8 characters)
+      // 3. Generate access token manually (8 characters)
       const accessToken = generateAccessToken();
 
-      // Create token manually
+      // 4. Create token
       const { data: tokenData, error: tokenError } = await supabase
         .from('user_tokens')
         .insert([{
-          user_id: user.id,
+          user_id: userId,
           access_token: accessToken,
           is_approved: false,
           is_active: true
@@ -75,7 +94,6 @@ export default async function handler(req, res) {
 
       if (tokenError) {
         console.error('Error creating token:', tokenError);
-        // Don't fail signup if token creation fails
       }
 
       return res.status(201).json({
@@ -101,11 +119,4 @@ function generateAccessToken() {
     token += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return token;
-}
-
-// Simple password hashing (in production, use bcrypt)
-async function hashPassword(password) {
-  // For now, just return a placeholder
-  // In production, use: const bcrypt = require('bcrypt'); return bcrypt.hash(password, 10);
-  return `hashed_${password}`;
 }
