@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     try {
       const { email, name, full_name, password } = req.body;
 
-      // Create user - let database handle default role
+      // Create user with 'agent' role (database constraint requires 'admin' or 'agent')
       const { data: user, error: userError } = await supabase
         .from('users')
         .insert([{
@@ -49,6 +49,7 @@ export default async function handler(req, res) {
           name: name || full_name,
           full_name: full_name || name,
           password_hash: password ? await hashPassword(password) : null,
+          role: 'agent',
           is_approved: false
         }])
         .select()
