@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -42,8 +42,8 @@ export default async function handler(req, res) {
     try {
       const { email, name, full_name, password } = req.body;
 
-      // 1. Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // 1. Create user in Supabase Auth using admin client
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true, // Auto-confirm email
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
 
       if (userError) {
         // Rollback: delete auth user if database insert fails
-        await supabase.auth.admin.deleteUser(userId);
+        await supabaseAdmin.auth.admin.deleteUser(userId);
         throw userError;
       }
 
