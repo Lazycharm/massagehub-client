@@ -17,7 +17,8 @@ import {
   Phone,
   Bell,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Database
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -97,26 +98,31 @@ export default function AppLayout({ children }) {
 
   const isAdmin = user?.role === 'admin';
 
-  const navigation = [
+  // User navigation - for agents/regular users
+  const userNavigation = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/Dashboard' },
-    { name: 'Contacts', icon: Users, href: '/Contacts' },
-    { name: 'Groups', icon: Users, href: '/Groups' },
-    { name: 'Send SMS', icon: MessageSquare, href: '/SendSMS' },
-    { name: 'Send Email', icon: Mail, href: '/SendEmail' },
+    { name: 'Resources', icon: Database, href: '/Resources' },
     { name: 'Templates', icon: FileText, href: '/Templates' },
-    { name: 'Inbox', icon: Inbox, href: '/Inbox' },
+    { name: 'Chatbox', icon: MessageSquare, href: '/Inbox' },
     { name: 'Reports', icon: BarChart3, href: '/Reports' },
     { name: 'Settings', icon: Settings, href: '/Settings' },
   ];
 
+  // Admin navigation - ONLY admin features
   const adminNavigation = [
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/Dashboard' },
     { name: 'Users', icon: Shield, href: '/admin/AdminUsers' },
+    { name: 'API Providers', icon: Database, href: '/admin/AdminProviders' },
+    { name: 'Chatrooms', icon: MessageSquare, href: '/admin/AdminChatrooms' },
+    { name: 'Resource Pool', icon: Database, href: '/admin/AdminResourcePool' },
     { name: 'Sender Numbers', icon: Phone, href: '/admin/AdminSenderNumbers' },
     { name: 'Message Logs', icon: MessageSquare, href: '/admin/AdminMessageLogs' },
-    { name: 'Token Management', icon: MessageSquare, href: '/admin/AdminTokens' },
     { name: 'Chatroom Access', icon: Shield, href: '/admin/AdminChatroomAccess' },
     { name: 'System Settings', icon: Settings, href: '/admin/AdminSettings' },
   ];
+
+  // Choose navigation based on role
+  const navigation = isAdmin ? adminNavigation : userNavigation;
 
   const handleLogout = async () => {
     try {
@@ -190,36 +196,6 @@ export default function AppLayout({ children }) {
                 );
               })}
             </div>
-
-            {isAdmin && (
-              <div className="mt-8">
-                <div className="px-4 mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Admin Panel
-                  </h3>
-                </div>
-                <div className="space-y-1">
-                  {adminNavigation.map((item) => {
-                    const isActive = currentPath === item.href;
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                          isActive
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <item.icon className="w-5 h-5" />
-                        <span className="font-medium">{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </nav>
 
           {/* User menu */}
@@ -266,24 +242,15 @@ export default function AppLayout({ children }) {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="flex-1 lg:flex-none">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {currentPath.split('/').pop()?.replace(/([A-Z])/g, ' $1').trim() || 'Dashboard'}
-              </h2>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* Token Balance */}
-              {user?.token_balance !== undefined && (
-                <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
-                  <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">💰</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs text-gray-500">Credits</p>
-                    <p className="text-sm font-bold text-amber-700">{user.token_balance}</p>
-                  </div>
-                </div>
-              )}
+            {/* Only show title for non-admin pages */}
+            {!currentPath.startsWith('/admin/') && (
+              <div className="flex-1 lg:flex-none">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {currentPath.split('/').pop()?.replace(/([A-Z])/g, ' $1').trim() || 'Dashboard'}
+                </h2>
+              </div>
+            )}
+            <div className="flex items-center gap-3 ml-auto">
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
@@ -293,7 +260,7 @@ export default function AppLayout({ children }) {
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main>
           {children}
         </main>
       </div>

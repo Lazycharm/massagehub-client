@@ -4,7 +4,7 @@ import { getUserFromRequest, getUserChatroomIds } from '../../../lib/authMiddlew
 
 /**
  * GET: Fetch chatrooms (filtered by user permissions)
- * POST: Create a new chatroom with name and twilio_number
+ * POST: Create a new chatroom with name and sender_number
  */
 export default async function handler(req, res) {
   try {
@@ -77,25 +77,25 @@ export default async function handler(req, res) {
         });
       }
 
-      const { name, twilio_number } = req.body;
+      const { name, sender_number } = req.body;
 
       // Validate required fields
-      if (!name || !twilio_number) {
-        return res.status(400).json({ error: 'Chatroom name and twilio_number are required' });
+      if (!name || !sender_number) {
+        return res.status(400).json({ error: 'Chatroom name and sender_number are required' });
       }
 
       // Sanitize inputs
       const sanitizedName = name.trim();
-      const sanitizedNumber = twilio_number.trim();
+      const sanitizedNumber = sender_number.trim();
 
       if (sanitizedName.length === 0 || sanitizedNumber.length === 0) {
-        return res.status(400).json({ error: 'Name and twilio_number cannot be empty' });
+        return res.status(400).json({ error: 'Name and sender_number cannot be empty' });
       }
 
       // Insert new chatroom into Supabase
-      const { data: newChatroom, error } = await supabase
+      const { data, error } = await supabase
         .from('chatrooms')
-        .insert([{ name: sanitizedName, twilio_number: sanitizedNumber }])
+        .insert([{ name: sanitizedName, sender_number: sanitizedNumber }])
         .select()
         .single();
 
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to create chatroom', details: error.message });
       }
 
-      return res.status(201).json(newChatroom);
+      return res.status(201).json(data);
     }
 
     // Method not allowed

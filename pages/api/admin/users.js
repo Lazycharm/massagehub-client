@@ -3,8 +3,8 @@ import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      // Get all users first
-      const { data: usersData, error: usersError } = await supabase
+      // Use supabaseAdmin to bypass RLS for admin operations
+      const { data: usersData, error: usersError } = await supabaseAdmin
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       if (usersError) throw usersError;
 
       // Get all user tokens
-      const { data: tokensData, error: tokensError } = await supabase
+      const { data: tokensData, error: tokensError } = await supabaseAdmin
         .from('user_tokens')
         .select('*');
 
@@ -61,8 +61,8 @@ export default async function handler(req, res) {
       const userId = authData.user.id;
       console.log('Created auth user:', userId, email);
 
-      // 2. Create user record in public.users
-      const { data: user, error: userError } = await supabase
+      // 2. Create user record in public.users using supabaseAdmin
+      const { data: user, error: userError } = await supabaseAdmin
         .from('users')
         .insert({
           id: userId, // Use same ID as auth user
@@ -87,8 +87,8 @@ export default async function handler(req, res) {
       // 3. Generate access token manually (8 characters)
       const accessToken = generateAccessToken();
 
-      // 4. Create token - Check if already exists first
-      const { data: existingToken } = await supabase
+      // 4. Create token - Check if already exists first using supabaseAdmin
+      const { data: existingToken } = await supabaseAdmin
         .from('user_tokens')
         .select('*')
         .eq('user_id', userId)
@@ -99,7 +99,7 @@ export default async function handler(req, res) {
         console.log('Token already exists for user:', userId);
         tokenData = existingToken;
       } else {
-        const { data: newToken, error: tokenError } = await supabase
+        const { data: newToken, error: tokenError } = await supabaseAdmin
           .from('user_tokens')
           .insert({
             user_id: userId,

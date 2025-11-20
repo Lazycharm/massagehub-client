@@ -188,7 +188,7 @@ export default function AdminChatroomAccess() {
                 <SelectContent>
                   {chatrooms.map(chatroom => (
                     <SelectItem key={chatroom.id} value={chatroom.id}>
-                      {chatroom.name} ({chatroom.twilio_number})
+                      {chatroom.name} ({chatroom.sender_number})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -217,7 +217,7 @@ export default function AdminChatroomAccess() {
                     <MessageSquare className="w-5 h-5 text-indigo-600" />
                     {chatroom.name}
                   </CardTitle>
-                  <p className="text-sm text-gray-500 mt-1">{chatroom.twilio_number}</p>
+                  <p className="text-sm text-gray-500 mt-1">{chatroom.sender_number}</p>
                 </div>
                 <Badge>{assignedUsers.length} users</Badge>
               </div>

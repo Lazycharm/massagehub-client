@@ -29,10 +29,11 @@ export default async function handler(req, res) {
           if (!chatroomIds.includes(chatroom_id)) {
             return res.status(403).json({ error: 'Access denied to this chatroom' });
           }
-          query = query.eq('chatroom_id', chatroom_id);
+          // Filter by both chatroom AND user_id (new simplified architecture)
+          query = query.eq('chatroom_id', chatroom_id).eq('user_id', user.id);
         } else {
-          // Return contacts from all accessible chatrooms
-          query = query.in('chatroom_id', chatroomIds);
+          // Return contacts from all accessible chatrooms for this user
+          query = query.in('chatroom_id', chatroomIds).eq('user_id', user.id);
         }
       } else {
         // Admin sees all contacts

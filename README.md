@@ -1,277 +1,251 @@
-# 📱 MessageHub - SMS & Email Management System
+# 📱 MessageHub - Multi-Provider Communication Platform
 
-A full-featured messaging platform built with **React**, **Next.js**, and **Supabase** for managing SMS and email communications through chatrooms.
+A modern, full-featured messaging platform supporting multiple providers (Twilio, Infobip, and more) with role-based access control, resource management, and a beautiful UI.
 
-## 🚀 Features
+## ✨ Features
 
-- ✅ **Chatroom Management** - Create and manage multiple chatrooms with dedicated Twilio numbers
-- ✅ **Contact Management** - Add contacts individually or bulk import via CSV
-- ✅ **Inbound Message Handling** - Twilio webhook integration for receiving SMS
-- ✅ **Message Storage** - All messages stored in Supabase with full history
-- ✅ **User Management** - Multi-user support with chatroom assignments
-- ✅ **Templates** - Pre-built SMS/email templates for quick sending
-- ✅ **Groups** - Organize contacts into groups for targeted messaging
-- ✅ **Admin Panel** - Manage sender numbers, settings, and message logs
+- 🔐 **Role-Based Access Control** - Admin and agent roles with granular permissions
+- 📱 **Multi-Provider Support** - Twilio, Infobip, Base44, and extensible architecture
+- 💬 **Unified Inbox** - Manage all conversations from one interface
+- 👥 **Contact Management** - Import and organize contacts efficiently
+- 📊 **Resource Pool** - Admin-managed contact resources with assignment system
+- 🎨 **Modern UI** - Built with Next.js, Tailwind CSS, and shadcn/ui components
+- 📧 **Multi-Channel** - SMS, WhatsApp, Email support (provider-dependent)
+- 🔄 **Real-time Updates** - Live message synchronization
+- 📈 **Analytics Ready** - Message tracking and quota management
+- 📝 **Templates** - Pre-built message templates for quick sending
 
 ## 📁 Project Structure
 
 ```
-messagehub-client/
-├── src/MessageHub/
-│   ├── components/          # React components
-│   │   ├── admin/          # Admin components
-│   │   ├── chatrooms/      # Chatroom UI
-│   │   ├── contacts/       # Contact management
-│   │   ├── dashboard/      # Dashboard widgets
-│   │   ├── groups/         # Group management
-│   │   ├── inbox/          # Message inbox
-│   │   ├── templates/      # Template editor
-│   │   └── ui/             # Reusable UI components
-│   ├── entities/           # JSON schemas
-│   ├── lib/                # Utilities
-│   │   └── supabaseClient.js
-│   ├── pages/              # Next.js pages
-│   │   ├── api/           # API routes
-│   │   │   ├── chatrooms/
-│   │   │   │   ├── index.js
-│   │   │   │   ├── [id]/contacts.js
-│   │   │   │   └── import-csv.js
-│   │   │   └── messages/
-│   │   │       └── inbound/
-│   │   │           └── index.js
-│   │   ├── admin/
-│   │   └── ...
-│   ├── Layout.js
-│   └── globals.css
-├── .env.local              # Environment variables
-├── package.json
-├── API_TESTING_GUIDE.md    # API testing documentation
-├── supabase-schema.sql     # Database schema
-└── test-contacts.csv       # Sample CSV for imports
+messagehub/
+├── components/          # React components
+│   ├── ui/             # shadcn/ui components
+│   ├── admin/          # Admin-specific components
+│   ├── chatrooms/      # Chatroom components
+│   ├── contacts/       # Contact management
+│   ├── groups/         # Group management
+│   ├── inbox/          # Inbox/messaging components
+│   └── templates/      # Message templates
+├── lib/                # Utility libraries
+│   ├── api.js         # API client functions
+│   ├── authMiddleware.js  # Authentication helpers
+│   └── supabaseClient.js  # Supabase client setup
+├── pages/              # Next.js pages and API routes
+│   ├── api/           # API endpoints
+│   ├── admin/         # Admin pages
+│   └── ...            # User-facing pages
+├── styles/            # Global styles
+├── supabase-migrations/  # Database migration files
+└── public/            # Static assets
 ```
 
-## 🛠️ Setup Instructions
+## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
 
+- Node.js 18+ installed
+- Supabase account
+- API credentials for at least one messaging provider (Twilio or Infobip)
+
+### Installation
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/Lazycharm/messagehub.git
+cd messagehub
+```
+
+2. **Install dependencies:**
 ```bash
 npm install
 ```
 
-Required packages:
-- `@supabase/supabase-js` - Supabase client
-- `formidable` - File upload handling
-- `csv-parse` - CSV parsing
+3. **Set up environment variables:**
 
-### 2. Configure Supabase
-
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to SQL Editor and run the `supabase-schema.sql` file
-3. Get your project URL and anon key from Settings → API
-
-### 3. Environment Variables
-
-Create `.env.local` in the project root:
+Create a `.env.local` file in the root directory:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Twilio Configuration (Optional)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+
+# Infobip Configuration (Optional)
+INFOBIP_API_KEY=your_infobip_api_key
+INFOBIP_BASE_URL=your_infobip_base_url
+
+# Application URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### 4. Run Development Server
+4. **Run database migrations:**
 
+Open your Supabase SQL Editor and run the migrations from the `supabase-migrations` folder in order:
+- `013_add_user_id_to_messages.sql`
+- `014_fix_message_counts_trigger.sql`  
+- `015_rename_twilio_number_column.sql`
+
+5. **Start the development server:**
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+6. Open [http://localhost:3000](http://localhost:3000)
 
-## 📡 API Endpoints
+### First Time Setup
+
+1. Create an admin account via the signup page
+2. Manually set your user role to `admin` in the Supabase `users` table
+3. Log in and configure your messaging providers in **Admin → API Providers**
+4. Add sender numbers in **Admin → Sender Numbers**
+5. Create chatrooms and assign users in **Admin → Chatrooms**
+
+## 📡 Key API Endpoints
+
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/signup` - User registration
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user
 
 ### Chatrooms
+- `GET /api/user-chatrooms/my-chatrooms` - Get user's assigned chatrooms
+- `GET /api/chatrooms/[id]/contacts` - Get chatroom contacts
+- `GET /api/contacts/[id]/messages` - Get contact message history
 
-**GET** `/api/chatrooms` - List all chatrooms  
-**POST** `/api/chatrooms` - Create new chatroom
+### Messaging
+- `POST /api/messages/send` - Send SMS/message via configured provider
+- `POST /api/messages/inbound` - Webhook for incoming messages
 
-```json
-{
-  "name": "Support Team",
-  "twilio_number": "+15551234567"
-}
-```
+### Admin
+- `GET /api/admin/chatrooms` - Manage chatrooms
+- `GET /api/providers` - Manage API providers
+- `GET /api/sender-numbers` - Manage sender numbers
+- `GET /api/resource-pool` - Manage contact resources
 
-### Contacts
+See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed API documentation.
 
-**PATCH** `/api/chatrooms/[id]/contacts` - Add contacts to chatroom
+## 🗄️ Database Schema
 
-```json
-{
-  "contacts": [
-    {
-      "name": "John Doe",
-      "phone_number": "+15559876543",
-      "email": "john@example.com",
-      "tags": ["vip", "customer"]
-    }
-  ]
-}
-```
+Key tables:
+- `users` - User accounts with role-based access
+- `chatrooms` - Messaging channels with provider configuration
+- `sender_numbers` - Phone/email/WhatsApp identifiers
+- `api_providers` - Provider credentials (Twilio, Infobip, etc.)
+- `contacts` - User-specific contact list
+- `messages` - All sent/received messages
+- `resource_pool` - Admin-managed contact resources
+- `user_chatrooms` - User-to-chatroom assignments
+- `user_tokens` - User message credits/quota
+- `templates` - Message templates
 
-### CSV Import
+## 🚀 Deployment
 
-**POST** `/api/chatrooms/import-csv` - Import contacts from CSV
+### Vercel Deployment (Recommended)
 
-Form data:
-- `file` - CSV file
-- `chatroomId` - Target chatroom UUID
+1. Push your code to GitHub
+2. Import project in [Vercel](https://vercel.com)
+3. Add environment variables in Vercel dashboard
+4. Deploy
 
-### Inbound Messages
+See [VERCEL_DEPLOYMENT_GUIDE.md](./VERCEL_DEPLOYMENT_GUIDE.md) for detailed instructions.
 
-**POST** `/api/messages/inbound` - Twilio webhook endpoint  
-**GET** `/api/messages/inbound` - Fetch all inbound messages
+## 🎯 User Workflow
 
-## 🔧 Twilio Integration
+### For Admins:
+1. Configure API providers (Twilio, Infobip)
+2. Add sender numbers (phone numbers, emails)
+3. Create chatrooms and link to providers
+4. Assign users to chatrooms
+5. Manage resource pool
+6. Monitor message logs
 
-### Configure Webhook
+### For Agents:
+1. Import assigned resources to your chatroom
+2. View contacts in Inbox
+3. Send and receive messages
+4. Use templates for quick responses
+5. Organize contacts into groups
 
-1. Go to Twilio Console → Phone Numbers
-2. Select your number
-3. Under "Messaging", set webhook URL:
-   ```
-   https://your-domain.com/api/messages/inbound
-   ```
-4. Set HTTP method to `POST`
+## 🔧 Configuration
 
-### Webhook Payload
+### Adding a New Messaging Provider
 
-Twilio sends these parameters:
-- `From` - Sender's phone number
-- `To` - Your Twilio number
-- `Body` - Message content
+1. Go to **Admin → API Providers**
+2. Click **Add Provider**
+3. Fill in provider details:
+   - Provider name
+   - Provider type (SMS, Email, WhatsApp)
+   - API credentials
+4. Test connection
+5. Save
 
-The API automatically:
-- Matches `To` number with a chatroom
-- Stores message in `inbound_messages` table
-- Updates `messages` table for unified inbox
-- Returns TwiML response to Twilio
+### Creating a Chatroom
 
-## 📊 Database Schema
+1. Go to **Admin → Chatrooms**
+2. Click **Create Chatroom**
+3. Configure:
+   - Chatroom name
+   - Select sender number
+   - Choose provider
+   - Set as active
+4. Assign users in **Admin → Chatroom Access**
 
-### Core Tables
+## 🛠️ Tech Stack
 
-- **chatrooms** - Chatroom configurations with Twilio numbers
-- **contacts** - Contact information linked to chatrooms
-- **messages** - All sent/received messages
-- **inbound_messages** - Inbound SMS from Twilio
-- **users** - System users
-- **user_chatrooms** - User-chatroom access (many-to-many)
-
-### Supporting Tables
-
-- **templates** - Message templates
-- **settings** - App settings
-- **sender_numbers** - Outbound number pool
-- **groups** - Contact groups
-- **group_members** - Group membership
-
-See `supabase-schema.sql` for complete schema with indexes and views.
-
-## 🧪 Testing
-
-### Quick Test Flow
-
-1. **Create a chatroom:**
-   ```bash
-   curl -X POST http://localhost:3000/api/chatrooms \
-     -H "Content-Type: application/json" \
-     -d '{"name": "Test Room", "twilio_number": "+15551234567"}'
-   ```
-
-2. **Import contacts:**
-   ```bash
-   curl.exe -X POST http://localhost:3000/api/chatrooms/import-csv \
-     -F "file=@test-contacts.csv" \
-     -F "chatroomId=YOUR_CHATROOM_ID"
-   ```
-
-3. **Simulate inbound SMS:**
-   ```bash
-   curl -X POST http://localhost:3000/api/messages/inbound \
-     -d "From=%2B15559999999&To=%2B15551234567&Body=Test%20message"
-   ```
-
-See `API_TESTING_GUIDE.md` for comprehensive testing instructions.
-
-## 🔐 Security
-
-- ✅ UUID-based IDs
-- ✅ Input validation and sanitization
-- ✅ SQL injection protection via Supabase client
-- ✅ Error handling with proper status codes
-- ✅ Optional Row Level Security (RLS) policies in schema
-
-### Enable RLS (Recommended for Production)
-
-Uncomment RLS policies in `supabase-schema.sql` and customize based on your auth requirements.
-
-## 📦 Tech Stack
-
-- **Frontend**: React, Next.js
+- **Frontend**: Next.js 14, React 18, Tailwind CSS
 - **Backend**: Next.js API Routes
-- **Database**: PostgreSQL (Supabase)
-- **File Upload**: Formidable
-- **CSV Parsing**: csv-parse
-- **SMS Provider**: Twilio
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth with JWT
+- **State Management**: React Query (TanStack Query)
+- **UI Components**: shadcn/ui, Radix UI
+- **Icons**: Lucide React
 
-## 🎨 Components
+## 📖 Documentation
 
-### UI Components (Reusable)
-- Alert, Badge, Button, Calendar
-- Card, Dropdown Menu, Input, Label
-- Popover, Select, Tabs, Textarea
-
-### Feature Components
-- **Admin**: SenderNumberForm
-- **Chatrooms**: ChatRoomSidebar, ChatRoomMessages, ChatRoomContacts
-- **Contacts**: ContactForm, ContactsTable, BulkImport
-- **Dashboard**: StatsCard, RecentMessages
-- **Groups**: GroupForm, ManageGroupMembers
-- **Inbox**: InboxMessageDetail
-- **Templates**: TemplateForm
-
-## 🚧 Future Enhancements
-
-- [ ] Real-time message updates via Supabase subscriptions
-- [ ] Outbound SMS sending
-- [ ] Email integration
-- [ ] Message scheduling
-- [ ] Analytics dashboard
-- [ ] Advanced filtering and search
-- [ ] Message threading by contact
-- [ ] Auto-reply rules
-- [ ] Contact tagging system
-- [ ] Export conversations
-
-## 📝 License
-
-MIT
+- [Architecture](./ARCHITECTURE.md) - System architecture and design decisions
+- [API Documentation](./API_DOCUMENTATION.md) - Detailed API reference
+- [Vercel Deployment](./VERCEL_DEPLOYMENT_GUIDE.md) - Deployment instructions
+- [Quick Start Guide](./QUICK_START.md) - Getting started guide
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📞 Support
+## 📝 License
 
-For issues or questions:
-- Check `API_TESTING_GUIDE.md` for troubleshooting
-- Review Supabase logs for database errors
-- Verify Twilio webhook configuration
-- Check browser console for frontend errors
+This project is licensed under the MIT License.
+
+## 🐛 Support
+
+For issues and questions:
+- Open an issue on [GitHub](https://github.com/Lazycharm/messagehub/issues)
+- Check existing documentation
+
+## 🎉 Changelog
+
+### v1.0.0 (Current)
+- ✅ Multi-provider messaging support (Twilio, Infobip)
+- ✅ Role-based access control (Admin/Agent)
+- ✅ Resource pool management
+- ✅ Unified inbox with real-time updates
+- ✅ Contact and group management
+- ✅ Message templates
+- ✅ Admin dashboard with analytics
+- ✅ CSV import/export
+- ✅ Message quota system
 
 ---
 
-**Built with ❤️ using React, Next.js, and Supabase**
+**Built with ❤️ using Next.js, React, and Supabase**
+

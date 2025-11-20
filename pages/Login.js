@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -38,6 +39,11 @@ export default function Login() {
       // API returns user data directly, session is in httpOnly cookie
       if (data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
+      }
+      
+      // Store access token for client-side API calls
+      if (data.access_token) {
+        localStorage.setItem('sb-access-token', data.access_token);
       }
 
       // Redirect to dashboard
@@ -139,10 +145,10 @@ export default function Login() {
 
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <a href="/Signup" className="text-blue-600 hover:underline font-medium">
+                Don&apos;t have an account?{' '}
+                <Link href="/Signup" className="text-blue-600 hover:underline font-medium">
                   Sign up here
-                </a>
+                </Link>
               </p>
             </div>
           </CardContent>

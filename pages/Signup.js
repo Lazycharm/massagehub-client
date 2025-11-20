@@ -113,7 +113,7 @@ export default function Signup() {
                 </p>
                 <p className="text-sm text-amber-700">
                   Your account has been created but requires admin approval before you can access the system.
-                  You'll be notified once your account is approved.
+                  You&apos;ll be notified once your account is approved.
                 </p>
               </div>
               <Button

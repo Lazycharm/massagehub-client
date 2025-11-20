@@ -16,14 +16,23 @@ export default async function handler(req, res) {
       await supabase.auth.signOut();
     }
 
-    // Clear the cookie
-    res.setHeader('Set-Cookie', cookie.serialize('sb-access-token', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 0,
-      path: '/',
-    }));
+    // Clear both cookies
+    res.setHeader('Set-Cookie', [
+      cookie.serialize('sb-access-token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 0,
+        path: '/',
+      }),
+      cookie.serialize('sb-refresh-token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 0,
+        path: '/',
+      })
+    ]);
 
     return res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {

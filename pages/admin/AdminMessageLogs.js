@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { MessageSquare, Mail, Search, Filter } from 'lucide-react';
+import { MessageSquare, Mail, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function AdminMessageLogs() {

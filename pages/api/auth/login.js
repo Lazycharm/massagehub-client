@@ -65,8 +65,18 @@ export default async function handler(req, res) {
       finalUser = newUser;
     }
 
-    // Set HTTP-only cookie with session token
+    // Set HTTP-only cookies with session tokens
     setCookie('sb-access-token', authData.session.access_token, {
+      req,
+      res,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+    });
+
+    setCookie('sb-refresh-token', authData.session.refresh_token, {
       req,
       res,
       maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -79,6 +89,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       user: finalUser,
       session: authData.session,
+      access_token: authData.session.access_token, // Add this so client can store it
     });
   } catch (error) {
     console.error('Login handler error:', error);

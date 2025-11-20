@@ -24,7 +24,7 @@ export default function ChatRoomSidebar({ onSelectChatroom }) {
           onClick={() => onSelectChatroom(room)}
           className="w-full text-left p-2 bg-white hover:bg-gray-100 rounded"
         >
-          {room.name} <span className="text-sm text-gray-400">{room.twilio_number}</span>
+          {room.name} <span className="text-sm text-gray-400">{room.sender_number}</span>
         </button>
       ))}
     </div>

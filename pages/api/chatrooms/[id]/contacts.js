@@ -1,9 +1,10 @@
 // pages/api/chatrooms/[id]/contacts.js
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../../lib/supabaseClient';
+import { getUserFromRequest, checkChatroomAccess } from '../../../../lib/authMiddleware';
 
 /**
+ * GET: Fetch contacts for a specific chatroom
  * PATCH: Assign a list of contacts to a specific chatroom
- * Accepts: chatroom_id (from URL param) and contacts array [{name, phone_number, email}]
  */
 export default async function handler(req, res) {
   const {
@@ -13,6 +14,41 @@ export default async function handler(req, res) {
   } = req;
 
   try {
+    if (method === 'GET') {
+      // Authenticate user
+      const { user, error: authError } = await getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Verify chatroom exists and user has access
+      const hasAccess = await checkChatroomAccess(user.id, id, user.role === 'admin');
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Access denied to this chatroom' });
+      }
+
+      // Fetch contacts for this chatroom
+      let query = supabaseAdmin
+        .from('contacts')
+        .select('*')
+        .eq('chatroom_id', id)
+        .order('created_at', { ascending: false });
+
+      // Non-admin users only see their own contacts
+      if (user.role !== 'admin') {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data: contacts, error: contactsError } = await query;
+
+      if (contactsError) {
+        console.error('Error fetching contacts:', contactsError);
+        return res.status(500).json({ error: 'Failed to fetch contacts' });
+      }
+
+      return res.status(200).json(contacts || []);
+    }
+
     if (method === 'PATCH') {
       const { contacts } = body;
 
@@ -105,7 +141,7 @@ export default async function handler(req, res) {
     }
 
     // Method not allowed
-    res.setHeader('Allow', ['PATCH']);
+    res.setHeader('Allow', ['GET', 'PATCH']);
     return res.status(405).end(`Method ${method} Not Allowed`);
 
   } catch (error) {

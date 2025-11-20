@@ -4,7 +4,7 @@ import { getUserFromRequest, getUserChatroomIds } from '../../../../lib/authMidd
 
 /**
  * POST: Twilio webhook endpoint for inbound SMS messages
- * Validates the to_number against chatrooms.twilio_number
+ * Validates the to_number against chatrooms.sender_number
  * Stores message in inbound_messages table with matched chatroom_id
  * 
  * Expected Twilio payload (form-urlencoded):
@@ -30,11 +30,11 @@ export default async function handler(req, res) {
       const toNumber = To.trim();
       const content = Body.trim();
 
-      // Find chatroom by matching twilio_number
+      // Find chatroom by matching sender_number
       const { data: chatrooms, error: chatroomError } = await supabase
         .from('chatrooms')
-        .select('id, twilio_number')
-        .eq('twilio_number', toNumber)
+        .select('id, sender_number')
+        .eq('sender_number', toNumber)
         .limit(1);
 
       if (chatroomError) {
@@ -42,11 +42,11 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Database error', details: chatroomError.message });
       }
 
-      // Validate that the Twilio number belongs to a chatroom
+      // Validate that the sender number belongs to a chatroom
       if (!chatrooms || chatrooms.length === 0) {
-        console.warn(`No chatroom found for Twilio number: ${toNumber}`);
+        console.warn(`No chatroom found for sender number: ${toNumber}`);
         return res.status(404).json({ 
-          error: 'Chatroom not found for this Twilio number',
+          error: 'Chatroom not found for this sender number',
           to_number: toNumber
         });
       }
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
 
       let query = supabase
         .from('inbound_messages')
-        .select('*, chatrooms(name, twilio_number)')
+        .select('*, chatrooms(name, sender_number)')
         .order('created_at', { ascending: false });
 
       // Filter by user permissions

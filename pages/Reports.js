@@ -20,7 +20,7 @@ export default function Reports() {
     queryFn: () => api.contacts.list()
   });
 
-  // Filter by time range
+  // Filter by time range with defensive guards
   const getDaysAgo = (days) => {
     const date = new Date();
     date.setDate(date.getDate() - days);
@@ -28,25 +28,31 @@ export default function Reports() {
   };
 
   const daysMap = { '7days': 7, '30days': 30, '90days': 90 };
-  const filteredMessages = messages.filter(m =>
-    m.created_at >= getDaysAgo(daysMap[timeRange])
-  );
+  const filteredMessages = messages.filter(m => {
+    // Defensive: Check if created_at exists
+    if (!m.created_at) return false;
+    return m.created_at >= getDaysAgo(daysMap[timeRange]);
+  });
 
   // Delivery success rate
   const totalSent = filteredMessages.filter(m => m.direction === 'outbound').length;
   const delivered = filteredMessages.filter(m => m.status === 'delivered').length;
   const failed = filteredMessages.filter(m => m.status === 'failed').length;
-  const deliveryRate = totalSent > 0 ? ((delivered / totalSent) * 100).toFixed(1) : 0;
+  const sent = filteredMessages.filter(m => m.status === 'sent').length;
+  const pending = filteredMessages.filter(m => m.status === 'pending').length;
+  
+  // Calculate delivery rate safely
+  const deliveryRate = totalSent > 0 ? ((delivered / totalSent) * 100).toFixed(1) : '0';
 
   // Status breakdown
   const statusData = [
     { name: 'Delivered', value: delivered, color: '#10b981' },
-    { name: 'Sent', value: filteredMessages.filter(m => m.status === 'sent').length, color: '#3b82f6' },
-    { name: 'Pending', value: filteredMessages.filter(m => m.status === 'pending').length, color: '#f59e0b' },
+    { name: 'Sent', value: sent, color: '#3b82f6' },
+    { name: 'Pending', value: pending, color: '#f59e0b' },
     { name: 'Failed', value: failed, color: '#ef4444' }
   ];
 
-  // By country
+  // By country (defensive against missing region)
   const countryStats = {};
   filteredMessages.forEach(m => {
     const country = m.region || 'Unknown';
@@ -57,7 +63,7 @@ export default function Reports() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  // Daily stats
+  // Daily stats (defensive against missing created_at)
   const last30Days = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - (29 - i));
@@ -65,7 +71,10 @@ export default function Reports() {
   });
 
   const dailyStats = last30Days.map(date => {
-    const dayMessages = messages.filter(m => m.created_at?.startsWith(date));
+    const dayMessages = messages.filter(m => {
+      // Defensive: Check if created_at exists before using it
+      return m.created_at && m.created_at.startsWith(date);
+    });
     return {
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       total: dayMessages.length,
@@ -75,9 +84,11 @@ export default function Reports() {
   });
 
   // Type breakdown
+  const smsCount = filteredMessages.filter(m => m.type === 'sms').length;
+  const emailCount = filteredMessages.filter(m => m.type === 'email').length;
   const typeData = [
-    { name: 'SMS', value: filteredMessages.filter(m => m.type === 'sms').length },
-    { name: 'Email', value: filteredMessages.filter(m => m.type === 'email').length }
+    { name: 'SMS', value: smsCount },
+    { name: 'Email', value: emailCount }
   ];
 
   return (
@@ -173,8 +184,8 @@ export default function Reports() {
                   outerRadius={100}
                   dataKey="value"
                 >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {statusData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip />

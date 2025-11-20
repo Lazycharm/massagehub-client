@@ -10,7 +10,7 @@ export default function SenderNumberForm({ senderNumber, onSubmit, onCancel, isL
   const [formData, setFormData] = useState(senderNumber || {
     label: '',
     number_or_id: '',
-    type: 'phone',
+    type: 'sms',
     region: '',
     active: true,
     provider: '',
@@ -54,15 +54,16 @@ export default function SenderNumberForm({ senderNumber, onSubmit, onCancel, isL
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="phone">Phone Number</SelectItem>
-                    <SelectItem value="alphanumeric">Alphanumeric Sender ID</SelectItem>
-                    <SelectItem value="email">Email Address</SelectItem>
+                    <SelectItem value="sms">SMS</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="viber">Viber</SelectItem>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="number_or_id">
-                  {formData.type === 'email' ? 'Email Address' : 'Number/Sender ID'} *
+                  {formData.type === 'email' ? 'Email Address' : 'Phone Number / ID'} *
                 </Label>
                 <Input
                   id="number_or_id"
@@ -71,9 +72,7 @@ export default function SenderNumberForm({ senderNumber, onSubmit, onCancel, isL
                   placeholder={
                     formData.type === 'email'
                       ? 'email@example.com'
-                      : formData.type === 'phone'
-                      ? '+1234567890'
-                      : 'MYCOMPANY'
+                      : '+1234567890'
                   }
                   required
                 />
