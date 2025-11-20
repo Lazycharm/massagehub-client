@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../../../lib/supabaseClient';
+import { supabaseAdmin } from '../../../lib/supabaseClient';
 import formidable from 'formidable';
 import fs from 'fs';
 import csv from 'csv-parser';

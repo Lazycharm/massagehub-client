@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../lib/supabaseClient';
+import { supabaseAdmin } from '../../lib/supabaseClient';
 
 /**
  * Seed Example Conversations for Demo/Testing
