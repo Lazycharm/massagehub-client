@@ -4,7 +4,8 @@ import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Search, MessageSquare, Send, Phone } from 'lucide-react';
+import { Search, MessageSquare, Send, Phone, UserPlus } from 'lucide-react';
+import ResourcePickerModal from '../components/inbox/ResourcePickerModal';
 
 /**
  * Inbox - Simplified 3-Panel Layout
@@ -17,6 +18,7 @@ export default function Inbox() {
   const [selectedContact, setSelectedContact] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [messageInput, setMessageInput] = useState('');
+  const [showResourcePicker, setShowResourcePicker] = useState(false);
 
   // Fetch user's chatrooms
   const { data: chatrooms = [], isLoading: loadingChatrooms } = useQuery({
@@ -100,6 +102,14 @@ export default function Inbox() {
     }
   };
 
+  const handleResourcePickerClose = (newContact) => {
+    setShowResourcePicker(false);
+    if (newContact) {
+      // Auto-select the newly added contact
+      setSelectedContact(newContact);
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-12rem)] flex gap-4">{/* Panel 1: Chatrooms */}
       <Card className="w-80 flex flex-col shadow-lg">
@@ -146,9 +156,21 @@ export default function Inbox() {
       {/* Panel 2: Contacts */}
       <Card className="w-80 flex flex-col shadow-lg">
         <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            {selectedChatroom ? `${selectedChatroom.chatroom?.name} Contacts` : 'Select a Chatroom'}
-          </h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {selectedChatroom ? `${selectedChatroom.chatroom?.name} Contacts` : 'Select a Chatroom'}
+            </h2>
+            {selectedChatroom && (
+              <Button
+                size="sm"
+                onClick={() => setShowResourcePicker(true)}
+                className="gap-1"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add
+              </Button>
+            )}
+          </div>
           {selectedChatroom && (
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -276,7 +298,17 @@ export default function Inbox() {
           )}
         </div>
       </Card>
+
+      {/* Resource Picker Modal */}
+      <ResourcePickerModal
+        isOpen={showResourcePicker}
+        onClose={handleResourcePickerClose}
+        chatroomId={selectedChatroom?.chatroom_id}
+      />
     </div>
   );
 }
+
+
+
 

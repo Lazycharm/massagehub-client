@@ -104,6 +104,7 @@ export default function AppLayout({ children }) {
     { name: 'Resources', icon: Database, href: '/Resources' },
     { name: 'Templates', icon: FileText, href: '/Templates' },
     { name: 'Chatbox', icon: MessageSquare, href: '/Inbox' },
+    { name: 'Chatroom', icon: Phone, href: '/Chatroom' },
     { name: 'Reports', icon: BarChart3, href: '/Reports' },
     { name: 'Settings', icon: Settings, href: '/Settings' },
   ];
