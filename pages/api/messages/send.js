@@ -124,14 +124,17 @@ export default async function handler(req, res) {
         const twilio = require('twilio');
         const client = twilio(accountSid, authToken);
 
+        const statusCallbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.messagehub.space'}/api/messages/status-callback`;
+
         const twilioMessage = await client.messages.create({
           body: content.trim(),
           from: fromNumber,
-          to: to_number.trim()
+          to: to_number.trim(),
+          statusCallback: statusCallbackUrl
         });
         messageSid = twilioMessage.sid;
         messageStatus = twilioMessage.status;
-        console.log('[Send Message] Twilio message sent:', messageSid);
+        console.log('[Send Message] Twilio message sent:', messageSid, 'Status callback:', statusCallbackUrl);
       } catch (twilioError) {
         console.error('[Send Message] Twilio error:', twilioError);
         return res.status(400).json({ 

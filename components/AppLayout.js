@@ -103,7 +103,6 @@ export default function AppLayout({ children }) {
     { name: 'Dashboard', icon: LayoutDashboard, href: '/Dashboard' },
     { name: 'Resources', icon: Database, href: '/Resources' },
     { name: 'Chatroom', icon: Phone, href: '/Chatroom' },
-    { name: 'Reports', icon: BarChart3, href: '/Reports' },
     { name: 'Settings', icon: Settings, href: '/Settings' },
   ];
 

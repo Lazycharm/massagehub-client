@@ -39,13 +39,15 @@ export default async function handler(req, res) {
     }
 
     // Check which resources are imported as contacts (NEW simplified architecture)
-    // A resource is "imported" if it exists in the contacts table with this user's user_id
+    // A resource is "imported" only if it exists in contacts with added_via='manual'
+    // Resources with added_via='import' are still available to "Start Chat"
     const phoneNumbers = resources.map(r => r.phone_number);
     
     const { data: importedContacts, error: contactsError } = await supabaseAdmin
       .from('contacts')
       .select('phone_number')
       .eq('user_id', user.id)
+      .eq('added_via', 'manual') // Only count manually added contacts as "imported"
       .in('phone_number', phoneNumbers);
 
     if (contactsError) {

@@ -52,6 +52,12 @@ export default async function handler(req, res) {
     if (method === 'PATCH') {
       const { contacts } = body;
 
+      // Authenticate user
+      const { user, error: authError } = await getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
       // Validate chatroom_id (UUID format)
       if (!id || typeof id !== 'string') {
         return res.status(400).json({ error: 'Valid chatroom ID is required' });
@@ -60,6 +66,12 @@ export default async function handler(req, res) {
       // Validate contacts array
       if (!contacts || !Array.isArray(contacts) || contacts.length === 0) {
         return res.status(400).json({ error: 'Contacts array is required and must not be empty' });
+      }
+
+      // Verify user has access to this chatroom
+      const hasAccess = await checkChatroomAccess(user.id, id, user.role === 'admin');
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Access denied to this chatroom' });
       }
 
       // Verify chatroom exists
@@ -90,15 +102,32 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Check if contact already exists (phone + chatroom)
-        const { data: existing } = await supabase
+        // Check if contact already exists (phone + chatroom + user)
+        const { data: existing } = await supabaseAdmin
           .from('contacts')
-          .select('id')
+          .select('id, added_via')
           .eq('phone_number', phoneNumber)
           .eq('chatroom_id', id)
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (existing) {
+          // If contact exists with added_via='import' and we're adding as 'manual', update it
+          if (existing.added_via === 'import' && contact.added_via === 'manual') {
+            const { error: updateError } = await supabaseAdmin
+              .from('contacts')
+              .update({ added_via: 'manual' })
+              .eq('id', existing.id);
+            
+            if (updateError) {
+              console.error('Error updating contact added_via:', updateError);
+              skipped.push({ contact, reason: 'Failed to update existing contact' });
+            }
+            // Don't skip - the update was successful
+            continue;
+          }
+          
+          // Otherwise skip (already exists as manual, or both are import)
           skipped.push({ contact, reason: 'Contact already exists in this chatroom' });
           continue;
         }
@@ -108,7 +137,10 @@ export default async function handler(req, res) {
           phone_number: phoneNumber,
           email: contact.email && contact.email.trim().length > 0 ? contact.email.trim().toLowerCase() : null,
           chatroom_id: id,
-          tags: Array.isArray(contact.tags) ? contact.tags : []
+          user_id: user.id,
+          tags: Array.isArray(contact.tags) ? contact.tags : [],
+          is_favorite: false,
+          added_via: contact.added_via === 'manual' ? 'manual' : 'import' // Track source
         });
       }
 
@@ -121,7 +153,7 @@ export default async function handler(req, res) {
       }
 
       // Bulk insert contacts
-      const { data: insertedContacts, error: insertError } = await supabase
+      const { data: insertedContacts, error: insertError } = await supabaseAdmin
         .from('contacts')
         .insert(sanitizedContacts)
         .select();

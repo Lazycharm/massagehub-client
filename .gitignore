@@ -27,10 +27,17 @@ yarn-error.log*
 
 # Local env files
 .env
-.env.local
+.env*.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # Vercel
 .vercel

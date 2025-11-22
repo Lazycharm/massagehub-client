@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
+import AppLayout from '../components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { MessageSquare, Users, TrendingUp, Send, Inbox, CheckCircle, Phone, Shield, Activity, Database, Clock } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
@@ -155,19 +156,7 @@ function AdminDashboard() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Admin Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500 mt-1">System overview and analytics</p>
-        </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-lg border border-purple-200">
-          <Shield className="w-5 h-5 text-purple-600" />
-          <span className="text-sm font-semibold text-purple-700">Administrator</span>
-        </div>
-      </div>
-
+      <div className="space-y-6 p-6">
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="shadow-lg border-l-4 border-l-blue-500">
@@ -365,100 +354,34 @@ function AdminDashboard() {
 // USER DASHBOARD - Regular User View
 // ============================================================================
 function UserDashboard() {
-  const [userId, setUserId] = useState(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserId(user.id);
-    };
-    fetchUser();
-  }, []);
-
-  const { data: messages = [] } = useQuery({
-    queryKey: ['userMessages', userId],
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['userStats'],
     queryFn: async () => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return data || [];
+      const token = localStorage.getItem('sb-access-token');
+      const res = await fetch('/api/user/stats', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      return res.json();
     },
-    enabled: !!userId
+    refetchInterval: 5000
   });
 
-  const { data: contacts = [] } = useQuery({
-    queryKey: ['userContacts', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*')
-        .eq('user_id', userId);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userId
-  });
+  if (isLoading || !stats) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const { data: chatrooms = [] } = useQuery({
-    queryKey: ['userChatrooms', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from('user_chatrooms')
-        .select('chatroom_id, chatrooms(id, name)')
-        .eq('user_id', userId);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userId
-  });
-
-  const { data: inboundMessages = [] } = useQuery({
-    queryKey: ['userInboundMessages', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      // Get user's chatroom IDs
-      const { data: userChatroomData, error: chatroomError } = await supabase
-        .from('user_chatrooms')
-        .select('chatroom_id')
-        .eq('user_id', userId);
-      
-      if (chatroomError || !userChatroomData) return [];
-      
-      const chatroomIds = userChatroomData.map(uc => uc.chatroom_id);
-      
-      if (chatroomIds.length === 0) return [];
-      
-      // Get inbound messages for those chatrooms
-      const { data, error } = await supabase
-        .from('inbound_messages')
-        .select('*')
-        .in('chatroom_id', chatroomIds)
-        .order('created_at', { ascending: false })
-        .limit(50);
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userId
-  });
-
-  const stats = {
-    totalSent: messages.length,
-    totalDelivered: messages.filter(m => m.status === 'delivered').length,
-    totalContacts: contacts.length,
-    totalInbound: inboundMessages.length,
-    totalChatrooms: chatrooms.length,
-    deliveryRate: messages.length > 0
-      ? ((messages.filter(m => m.status === 'delivered').length / messages.length) * 100).toFixed(1)
-      : 0
-  };
+  const messages = stats.messages || [];
+  const contacts = stats.contacts || [];
+  const chatrooms = stats.chatrooms || [];
+  const inboundMessages = stats.inboundMessages || [];
 
   // Chart data
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -491,13 +414,7 @@ function UserDashboard() {
   const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
   return (
-    <div className="space-y-6">
-      {/* User Header */}
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Your messaging overview</p>
-      </div>
-
+      <div className="space-y-6 p-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatsCard

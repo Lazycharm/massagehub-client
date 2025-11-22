@@ -1,93 +1,62 @@
-# 🚀 Migrations to Run - Fix Message Storage
+# 🚀 Migrations to Run
 
-## Problem
-Messages are sending successfully via Infobip but failing to store in the database with error:
-```
-relation "client_assignments" does not exist
-```
+## Latest Migrations
 
-Additionally, code was still referencing the old `twilio_number` column which was renamed to `sender_number`.
-
-## Root Cause
-1. The `update_message_counts` trigger function references the old `client_assignments` table that was removed
-2. API files were still querying `twilio_number` column after migration 015 renamed it to `sender_number`
-
-## Solution - Run These Migrations in Order
-
-### ✅ COMPLETED: Migration 015 (Already Run)
-Column renamed from `twilio_number` → `sender_number` and spaces removed from phone numbers.
-
-### ✅ COMPLETED: Code Updates (Already Done)
-All API files and components updated to use `sender_number`:
-- `/api/user-chatrooms/my-chatrooms.js`
-- `/api/user-chatrooms/index.js` 
-- `/api/messages/send.js`
-- `/api/messages/inbound/index.js`
-- `/api/chatrooms/index.js`
-- `/api/admin/chatrooms.js`
-- `/pages/admin/AdminChatrooms.js`
-- `/pages/admin/AdminChatroomAccess.js`
-- `/components/chatrooms/ChatRoomSidebar.jsx`
-
-### Migration 014: Fix Message Counts Trigger ⚠️ RUN THIS NOW
-**File:** `supabase-migrations/014_fix_message_counts_trigger.sql`
+### Migration 018: Complete Current Schema ✅ REFERENCE ONLY
+**File:** `supabase-migrations/018_complete_current_schema.sql`
 
 **What it does:**
-- Removes references to deleted `client_assignments` and `user_real_numbers` tables from trigger
-- Simplifies trigger to only update `user_quotas` table
-- Allows messages to be stored without old table dependencies
+- Complete schema definition for the current MessageHub database
+- Includes all tables, constraints, indexes, and foreign keys
+- Use this as a reference or to set up a fresh database
+- **DO NOT run on existing database** (will create duplicate tables)
 
-**How to run:**
-1. Open Supabase Dashboard → SQL Editor
-2. Copy entire contents of `014_fix_message_counts_trigger.sql`
-3. Paste and click **RUN**
-4. Should see: `✅ Migration 014 complete!`
+**Purpose:**
+This file represents the complete current state of your database schema for documentation and fresh installations.
 
 ---
 
-## Testing After Migrations
+### Migration 017: Add Contact Source Tracking ⚠️ RUN THIS NOW
+**File:** `supabase-migrations/017_add_contact_source_field.sql`
 
-1. **Send a test message** via Inbox at `http://localhost:3000/Inbox`
-2. **Check terminal logs** - should see:
-   ```
-   [Send Message] Infobip message sent: 4636XXXXXXXXXXXXX
-   [Send Message] Message stored successfully: <uuid>
-   ```
-3. **Verify in Inbox** - message should now appear in the chat window
-4. **Check database** - Query messages table to confirm user_id is populated:
-   ```sql
-   SELECT id, content, user_id, chatroom_id, created_at 
-   FROM messages 
-   ORDER BY created_at DESC 
-   LIMIT 5;
-   ```
+**What it does:**
+- Adds `added_via` column to `contacts` table to distinguish between:
+  - `'manual'` - Contacts added via "Add Contact" button (Start Chat)
+  - `'import'` - Contacts imported from resource pool
+- Updates existing contacts to be marked as 'import' (legacy behavior)
+- New contacts default to 'manual' when added via UI
 
-## What Was Already Fixed
+**Why it's needed:**
+The Chatroom page should only display contacts that were manually added via "Start Chat", not all imported resources. This field allows filtering.
 
-✅ Migration 013 - Added `user_id` column to messages table with RLS policies  
-✅ Updated `send.js` - Stores `user_id` with each message  
-✅ Infobip Integration - Messages sending successfully (confirmed with message IDs)  
-✅ Code Updated - Handles both `sender_number` and `twilio_number` column names  
+**How to run:**
+1. Open Supabase Dashboard → SQL Editor
+2. Copy entire contents of `017_add_contact_source_field.sql`
+3. Paste and click **RUN**
+4. Should see: Success message
 
-## Expected Results
+**After running:** The Chatroom contacts list will only show contacts added via the "Add Contact" button.
 
-After running migration 014:
-- ✅ Messages send via Infobip
-- ✅ Messages store in database with user_id
-- ✅ Messages display in Inbox
-- ✅ No more `client_assignments` errors
+---
 
-## If You Still See Issues
+### Migration 016: Add Contacts Favorite Field ⚠️ RUN THIS
+**File:** `supabase-migrations/016_add_contacts_favorite_field.sql`
 
-Check for any other triggers referencing old tables:
-```sql
--- List all triggers on messages table
-SELECT trigger_name, event_manipulation, action_statement 
-FROM information_schema.triggers 
-WHERE event_object_table = 'messages';
+**What it does:**
+- Adds `is_favorite` boolean field to contacts table
+- Allows users to mark contacts as favorites
+- Favorites are sorted to the top of contact lists
 
--- List all functions that might reference client_assignments
-SELECT routine_name, routine_definition 
-FROM information_schema.routines 
-WHERE routine_definition LIKE '%client_assignments%';
-```
+**How to run:**
+1. Open Supabase Dashboard → SQL Editor
+2. Copy entire contents of `016_add_contacts_favorite_field.sql`
+3. Paste and click **RUN**
+
+---
+
+## Previously Completed Migrations
+
+### ✅ Migration 015: Rename twilio_number Column (Already Run)
+Column renamed from `twilio_number` → `sender_number` and spaces removed from phone numbers.
+
+### ✅ Migration 014: Fix Message Counts Trigger (Already Run)

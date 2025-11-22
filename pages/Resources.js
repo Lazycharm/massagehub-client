@@ -194,15 +194,8 @@ export default function Resources() {
   };
 
   return (
-    <AppLayout>
       <div className="p-6 max-w-full">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">My Client Resources</h1>
-            <p className="text-gray-600 mt-1">
-              Client phone numbers assigned by admin. Import them to your lines to start messaging in Chatbox.
-            </p>
-          </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExport}>
               <Download className="h-4 w-4 mr-2" />
@@ -464,6 +457,5 @@ export default function Resources() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
   );
 }

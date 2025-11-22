@@ -105,6 +105,7 @@ export default async function handler(req, res) {
           phone_number: resource.phone_number,
           email: resource.email || null,
           tags: [],
+          added_via: 'import', // Mark as imported from resources (won't show in Chatroom until Start Chat)
           metadata: {
             imported_from_resource: resource.id,
             resource_first_name: resource.first_name,

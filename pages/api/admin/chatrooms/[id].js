@@ -53,6 +53,8 @@ export default async function handler(req, res) {
 
   if (req.method === 'DELETE') {
     try {
+      const { force } = req.query; // Allow force delete via query param
+
       // Check if chatroom has messages
       const { data: messages } = await supabaseAdmin
         .from('messages')
@@ -60,10 +62,38 @@ export default async function handler(req, res) {
         .eq('chatroom_id', id)
         .limit(1);
 
-      if (messages && messages.length > 0) {
+      if (messages && messages.length > 0 && force !== 'true') {
         return res.status(400).json({ 
-          error: 'Cannot delete chatroom with existing messages. Archive it instead.' 
+          error: 'Cannot delete chatroom with existing messages. Use force delete or archive instead.',
+          hasMessages: true
         });
+      }
+
+      // If force delete, delete messages first
+      if (force === 'true') {
+        // Delete all messages in this chatroom
+        await supabaseAdmin
+          .from('messages')
+          .delete()
+          .eq('chatroom_id', id);
+
+        // Delete all inbound messages
+        await supabaseAdmin
+          .from('inbound_messages')
+          .delete()
+          .eq('chatroom_id', id);
+
+        // Delete all contacts in this chatroom
+        await supabaseAdmin
+          .from('contacts')
+          .delete()
+          .eq('chatroom_id', id);
+
+        // Delete user assignments
+        await supabaseAdmin
+          .from('user_chatrooms')
+          .delete()
+          .eq('chatroom_id', id);
       }
 
       const { error } = await supabaseAdmin
@@ -73,7 +103,11 @@ export default async function handler(req, res) {
 
       if (error) throw error;
 
-      return res.status(200).json({ message: 'Chatroom deleted successfully' });
+      return res.status(200).json({ 
+        message: force === 'true' 
+          ? 'Chatroom and all associated data deleted successfully' 
+          : 'Chatroom deleted successfully' 
+      });
     } catch (error) {
       console.error('Error deleting chatroom:', error);
       return res.status(500).json({ error: error.message });

@@ -6,7 +6,7 @@ import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { MessageSquare, Plus, Edit, Trash2, Users as UsersIcon, Database, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
+import { MessageSquare, Plus, Edit, Trash2, Users as UsersIcon, Database, CheckCircle, XCircle, TrendingUp, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export default function AdminChatrooms() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -109,8 +109,11 @@ export default function AdminChatrooms() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      const res = await fetch(`/api/admin/chatrooms/${id}`, {
+    mutationFn: async ({ id, force }) => {
+      const url = force 
+        ? `/api/admin/chatrooms/${id}?force=true` 
+        : `/api/admin/chatrooms/${id}`;
+      const res = await fetch(url, {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -119,8 +122,35 @@ export default function AdminChatrooms() {
       }
       return res.json();
     },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['adminChatrooms']);
+      alert(`✅ ${data.message}`);
+    },
+    onError: (error) => {
+      alert(`❌ ${error.message}`);
+      console.error('Delete chatroom error:', error);
+    }
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }) => {
+      const res = await fetch(`/api/admin/chatrooms/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !isActive }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update chatroom');
+      }
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['adminChatrooms']);
+      alert('✅ Chatroom status updated!');
+    },
+    onError: (error) => {
+      alert(`❌ ${error.message}`);
     }
   });
 
@@ -164,9 +194,26 @@ export default function AdminChatrooms() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (confirm('Are you sure you want to delete this chatroom?')) {
-      deleteMutation.mutate(id);
+  const handleDelete = (id, hasMessages = false) => {
+    if (hasMessages) {
+      const confirmMsg = 'This chatroom has messages. Choose an option:\n\n' +
+        'OK - Force delete (removes chatroom and all messages)\n' +
+        'Cancel - Keep the chatroom';
+      
+      if (confirm(confirmMsg)) {
+        deleteMutation.mutate({ id, force: true });
+      }
+    } else {
+      if (confirm('Are you sure you want to delete this chatroom?')) {
+        deleteMutation.mutate({ id, force: false });
+      }
+    }
+  };
+
+  const handleToggleActive = (id, isActive) => {
+    const action = isActive ? 'deactivate (archive)' : 'activate';
+    if (confirm(`Are you sure you want to ${action} this chatroom?`)) {
+      toggleActiveMutation.mutate({ id, isActive });
     }
   };
 
@@ -310,7 +357,7 @@ export default function AdminChatrooms() {
                         ...formData, 
                         sender_number_id: e.target.value || null,
                         sender_number: selectedNumber?.number_or_id || formData.sender_number,
-                        provider: selectedNumber?.provider || formData.provider
+                        provider: selectedNumber?.provider ? selectedNumber.provider.toLowerCase() : formData.provider
                       });
                     }}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -476,21 +523,37 @@ export default function AdminChatrooms() {
                             size="sm"
                             onClick={() => handleAssignUsers(chatroom)}
                             className="gap-1"
+                            title="Assign users"
                           >
                             <UsersIcon className="w-3 h-3" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleToggleActive(chatroom.id, chatroom.is_active)}
+                            className={chatroom.is_active ? 'text-orange-600' : 'text-green-600'}
+                            title={chatroom.is_active ? 'Archive (deactivate)' : 'Activate'}
+                          >
+                            {chatroom.is_active ? (
+                              <ToggleRight className="w-4 h-4" />
+                            ) : (
+                              <ToggleLeft className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleEdit(chatroom)}
+                            title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(chatroom.id)}
+                            onClick={() => handleDelete(chatroom.id, chatroom.message_count > 0)}
                             className="text-red-600 hover:text-red-700"
+                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

@@ -5,13 +5,13 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { X, Search, UserPlus, Loader2 } from 'lucide-react';
 
-export default function ResourcePickerModal({ isOpen, onClose, chatroomId }) {
+export default function ResourcePickerModal({ isOpen, onClose, chatroomId = null }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [addingContactId, setAddingContactId] = useState(null);
   const queryClient = useQueryClient();
 
   // Fetch user's assigned resources
-  const { data: resources = [], isLoading } = useQuery({
+  const { data: resources = [], isLoading: loadingResources } = useQuery({
     queryKey: ['myResources'],
     queryFn: async () => {
       const token = localStorage.getItem('sb-access-token');
@@ -24,6 +24,20 @@ export default function ResourcePickerModal({ isOpen, onClose, chatroomId }) {
     enabled: isOpen,
   });
 
+  // Fetch user's chatrooms (to auto-select appropriate chatroom)
+  const { data: chatrooms = [], isLoading: loadingChatrooms } = useQuery({
+    queryKey: ['myChatrooms'],
+    queryFn: async () => {
+      const token = localStorage.getItem('sb-access-token');
+      const res = await fetch('/api/user-chatrooms/my-chatrooms', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch chatrooms');
+      return res.json();
+    },
+    enabled: isOpen && !chatroomId,
+  });
+
   // Filter to show only unimported resources
   const availableResources = resources
     .filter(r => !r.is_imported)
@@ -33,14 +47,26 @@ export default function ResourcePickerModal({ isOpen, onClose, chatroomId }) {
     );
 
   const handleAddContact = async (resource) => {
-    if (!chatroomId || addingContactId) return;
+    if (addingContactId) return;
     
     setAddingContactId(resource.id);
     try {
       const token = localStorage.getItem('sb-access-token');
       
+      // Determine which chatroom to use
+      let targetChatroomId = chatroomId;
+      
+      // If no chatroom specified, auto-select the first available chatroom
+      if (!targetChatroomId && chatrooms.length > 0) {
+        targetChatroomId = chatrooms[0].chatroom_id;
+      }
+      
+      if (!targetChatroomId) {
+        throw new Error('No chatroom available. Please contact your admin.');
+      }
+      
       // Create contact in the chatroom
-      const res = await fetch(`/api/chatrooms/${chatroomId}/contacts`, {
+      const res = await fetch(`/api/chatrooms/${targetChatroomId}/contacts`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -51,6 +77,7 @@ export default function ResourcePickerModal({ isOpen, onClose, chatroomId }) {
             name: resource.name,
             phone_number: resource.phone_number,
             email: resource.email,
+            added_via: 'manual', // Mark as manually added (not imported)
           }]
         }),
       });
@@ -64,23 +91,34 @@ export default function ResourcePickerModal({ isOpen, onClose, chatroomId }) {
       
       // Refresh resources and contacts
       queryClient.invalidateQueries(['myResources']);
-      queryClient.invalidateQueries(['chatroomContacts', chatroomId]);
+      queryClient.invalidateQueries(['myContacts']);
+      queryClient.invalidateQueries(['chatroomContacts', targetChatroomId]);
       
       // Close modal and notify parent to select the new contact
-      if (result.created?.[0]) {
-        onClose(result.created[0]);
+      if (result.contacts?.[0]) {
+        // Fetch the chatroom info to enrich the contact
+        const chatroomInfo = chatrooms.find(c => c.chatroom_id === targetChatroomId);
+        
+        // Enrich contact with chatroom info
+        const newContact = {
+          ...result.contacts[0],
+          chatroom_id: targetChatroomId,
+          chatroom: chatroomInfo?.chatroom || null
+        };
+        onClose(newContact);
       } else {
         onClose();
       }
     } catch (error) {
       console.error('Add contact error:', error);
       alert(`Failed to add contact: ${error.message}`);
-    } finally {
       setAddingContactId(null);
     }
   };
 
   if (!isOpen) return null;
+
+  const isLoading = loadingResources || loadingChatrooms;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
