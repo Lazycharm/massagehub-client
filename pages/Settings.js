@@ -482,7 +482,7 @@ export default function Settings() {
                   </h4>
                   <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
                     <li>Use a strong password with at least 6 characters</li>
-                    <li>Don't share your password with anyone</li>
+                    <li>Don&apos;t share your password with anyone</li>
                     <li>Change your password regularly</li>
                   </ul>
                 </div>
