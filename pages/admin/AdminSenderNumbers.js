@@ -180,12 +180,7 @@ export default function AdminSenderNumbers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sender Numbers</h1>
-          <p className="text-gray-500 mt-1">Manage phone numbers and sender IDs</p>
-        </div>
-        <div className="flex gap-2">
+      <div className="flex items-center justify-end gap-2 mb-6">
           <Button
             variant="outline"
             onClick={handleSyncFromProvider}
