@@ -138,11 +138,6 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-gray-500">
-              <p>Demo Credentials:</p>
-              <p className="font-mono text-xs mt-1">admin@messagehub.com / password123</p>
-            </div>
-
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
                 Don&apos;t have an account?{' '}
