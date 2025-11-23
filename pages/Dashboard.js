@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabaseClient';
 import AppLayout from '../components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { MessageSquare, Users, TrendingUp, Send, Inbox, CheckCircle, Phone, Shield, Activity, Database, Clock } from 'lucide-react';
@@ -42,51 +41,34 @@ export default function Dashboard() {
 // ADMIN DASHBOARD - Analytics and System Overview
 // ============================================================================
 function AdminDashboard() {
-  const { data: messages = [] } = useQuery({
-    queryKey: ['allMessages'],
+  const { data: adminStats, isLoading } = useQuery({
+    queryKey: ['adminStats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-      return data || [];
-    }
+      const token = localStorage.getItem('sb-access-token');
+      const res = await fetch('/api/admin/stats', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch admin stats');
+      return res.json();
+    },
+    refetchInterval: 30000 // Refresh every 30 seconds
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['allUsers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*');
-      if (error) throw error;
-      return data || [];
-    }
-  });
+  if (isLoading || !adminStats) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const { data: chatrooms = [] } = useQuery({
-    queryKey: ['allChatrooms'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('chatrooms')
-        .select('*');
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  const { data: senderNumbers = [] } = useQuery({
-    queryKey: ['allSenderNumbers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sender_numbers')
-        .select('*');
-      if (error) throw error;
-      return data || [];
-    }
-  });
+  const messages = adminStats.messages || [];
+  const users = adminStats.users || [];
+  const chatrooms = adminStats.chatrooms || [];
+  const senderNumbers = adminStats.senderNumbers || [];
 
   // Calculate stats
   const now = new Date();
