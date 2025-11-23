@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabaseClient';
+import { supabaseAdmin } from '../../../lib/supabaseClient';
 import { getUserFromRequest } from '../../../lib/authMiddleware';
 
 /**
@@ -22,8 +22,9 @@ export default async function handler(req, res) {
 
     const userId = user.id;
 
+    // Use supabaseAdmin to bypass RLS issues on server-side
     // Fetch messages sent by this user
-    const { data: messages, error: messagesError } = await supabase
+    const { data: messages, error: messagesError } = await supabaseAdmin
       .from('messages')
       .select('*')
       .eq('user_id', userId)
@@ -34,7 +35,7 @@ export default async function handler(req, res) {
     }
 
     // Fetch contacts for this user
-    const { data: contacts, error: contactsError } = await supabase
+    const { data: contacts, error: contactsError } = await supabaseAdmin
       .from('contacts')
       .select('*')
       .eq('user_id', userId);
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
     }
 
     // Fetch chatrooms assigned to this user
-    const { data: userChatrooms, error: chatroomsError } = await supabase
+    const { data: userChatrooms, error: chatroomsError } = await supabaseAdmin
       .from('user_chatrooms')
       .select('chatroom_id, chatrooms(id, name)')
       .eq('user_id', userId);
@@ -58,7 +59,7 @@ export default async function handler(req, res) {
     let inboundMessages = [];
     
     if (chatroomIds.length > 0) {
-      const { data: inbound, error: inboundError } = await supabase
+      const { data: inbound, error: inboundError } = await supabaseAdmin
         .from('inbound_messages')
         .select('*')
         .in('chatroom_id', chatroomIds)
