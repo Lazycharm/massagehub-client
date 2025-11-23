@@ -65,11 +65,7 @@ export default function Templates() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Message Templates</h1>
-          <p className="text-gray-500 mt-1">Reusable templates for quick messaging</p>
-        </div>
+      <div className="flex items-center justify-end mb-6">
         <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" />
           Create Template

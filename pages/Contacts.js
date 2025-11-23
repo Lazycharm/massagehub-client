@@ -86,12 +86,7 @@ export default function Contacts() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-          <p className="text-gray-500 mt-1">Manage your contact database</p>
-        </div>
-        <div className="flex gap-2">
+      <div className="flex items-center justify-end gap-2 mb-6">
           <Button variant="outline" onClick={exportContacts}>
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -100,11 +95,10 @@ export default function Contacts() {
             <Upload className="w-4 h-4 mr-2" />
             Import
           </Button>
-          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Contact
-          </Button>
-        </div>
+        <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Contact
+        </Button>
       </div>
 
       {/* Stats */}
