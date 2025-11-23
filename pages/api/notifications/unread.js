@@ -55,15 +55,10 @@ export default async function handler(req, res) {
 
     console.log('[Notifications] User chatrooms:', assignments?.length || 0);
 
-    // If no chatrooms and no admin notifications, return empty
-    if ((!assignments || assignments.length === 0) && adminNotifications.length === 0) {
-      console.log('[Notifications] No chatrooms and no admin notifications');
-      return res.status(200).json({ count: 0, notifications: [] });
-    }
-
+    // Get messages if user has chatrooms
     let messages = [];
     if (assignments && assignments.length > 0) {
-        const chatroomIds = assignments.map(a => a.chatroom_id);
+      const chatroomIds = assignments.map(a => a.chatroom_id);
 
       // Get messages from the last 24 hours that aren't from the user
       const yesterday = new Date();
@@ -87,25 +82,11 @@ export default async function handler(req, res) {
       console.log('[Notifications] Found messages:', messages.length);
     }
 
-    // Get messages from the last 24 hours that aren't from the user
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const { data: messages, error } = await supabaseAdmin
-      .from('messages')
-      .select('id, chatroom_id, sender, body, created_at, direction')
-      .in('chatroom_id', chatroomIds)
-      .eq('direction', 'inbound') // Only inbound messages (from customers)
-      .gte('created_at', yesterday.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (error) {
-      console.error('[Notifications] Error fetching messages:', error);
-      return res.status(500).json({ error: 'Failed to fetch notifications' });
+    // If no chatrooms, no messages, and no admin notifications, return empty
+    if (messages.length === 0 && adminNotifications.length === 0) {
+      console.log('[Notifications] No notifications to return');
+      return res.status(200).json({ count: 0, notifications: [] });
     }
-
-    console.log('[Notifications] Found messages:', messages?.length || 0);
 
     // Format message notifications
     const messageNotifications = (messages || []).map(msg => ({
