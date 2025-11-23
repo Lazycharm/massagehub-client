@@ -21,6 +21,9 @@ import {
   Circle,
   Database,
   Phone,
+  Plus,
+  Upload,
+  X,
 } from 'lucide-react';
 
 export default function Resources() {
@@ -31,6 +34,15 @@ export default function Resources() {
   const [selectedResources, setSelectedResources] = useState(new Set());
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedChatroom, setSelectedChatroom] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newResource, setNewResource] = useState({
+    phone_number: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    tags: ''
+  });
+  const [csvFile, setCsvFile] = useState(null);
 
   // Fetch user's assigned resources
   const { data: resources = [], isLoading: loadingResources } = useQuery({
@@ -92,6 +104,63 @@ export default function Resources() {
       alert(result.message);
     },
     onError: error => {
+      alert(error.message);
+    },
+  });
+
+  // Add resource mutation
+  const addResourceMutation = useMutation({
+    mutationFn: async (resourceData) => {
+      const token = localStorage.getItem('sb-access-token');
+      const res = await fetch('/api/user-resources/add-resource', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(resourceData),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to add resource');
+      }
+      return res.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries(['myResources']);
+      setShowAddModal(false);
+      setNewResource({ phone_number: '', first_name: '', last_name: '', email: '', tags: '' });
+      alert(result.message);
+    },
+    onError: (error) => {
+      alert(error.message);
+    },
+  });
+
+  // Bulk import mutation
+  const bulkImportMutation = useMutation({
+    mutationFn: async (resources) => {
+      const token = localStorage.getItem('sb-access-token');
+      const res = await fetch('/api/user-resources/bulk-add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ resources }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to import resources');
+      }
+      return res.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries(['myResources']);
+      setCsvFile(null);
+      alert(result.message);
+    },
+    onError: (error) => {
       alert(error.message);
     },
   });
@@ -197,6 +266,21 @@ export default function Resources() {
       <div className="p-6 max-w-full">
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-2">
+            <Button onClick={() => setShowAddModal(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Resource
+            </Button>
+            <Button variant="outline" onClick={() => document.getElementById('csv-upload').click()} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import CSV
+            </Button>
+            <input
+              id="csv-upload"
+              type="file"
+              accept=".csv"
+              onChange={handleCsvUpload}
+              className="hidden"
+            />
             <Button variant="outline" onClick={handleExport}>
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -449,13 +533,80 @@ export default function Resources() {
                 <p>No resources found</p>
                 {resources.length === 0 && (
                   <p className="text-sm mt-2">
-                    Contact your admin to assign resources to you
+                    Click "Add Resource" to add your first contact resource
                   </p>
                 )}
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Add Resource Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Add New Resource</CardTitle>
+                  <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-gray-700">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Phone Number *</label>
+                  <Input
+                    placeholder="+1234567890"
+                    value={newResource.phone_number}
+                    onChange={(e) => setNewResource({ ...newResource, phone_number: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">First Name</label>
+                  <Input
+                    placeholder="John"
+                    value={newResource.first_name}
+                    onChange={(e) => setNewResource({ ...newResource, first_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Last Name</label>
+                  <Input
+                    placeholder="Doe"
+                    value={newResource.last_name}
+                    onChange={(e) => setNewResource({ ...newResource, last_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email</label>
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={newResource.email}
+                    onChange={(e) => setNewResource({ ...newResource, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Tags (comma-separated)</label>
+                  <Input
+                    placeholder="VIP, Client, Friend"
+                    value={newResource.tags}
+                    onChange={(e) => setNewResource({ ...newResource, tags: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button onClick={handleAddResource} disabled={addResourceMutation.isPending} className="flex-1">
+                    {addResourceMutation.isPending ? 'Adding...' : 'Add Resource'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
   );
 }
