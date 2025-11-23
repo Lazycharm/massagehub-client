@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import AppLayout from '../components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -313,7 +312,6 @@ export default function Resources() {
   };
 
   return (
-    <AppLayout>
       <div className="p-6 max-w-full">
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-2">
@@ -659,6 +657,5 @@ export default function Resources() {
           </div>
         )}
       </div>
-    </AppLayout>
   );
 }

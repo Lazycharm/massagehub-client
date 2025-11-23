@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import AppLayout from '../components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -96,7 +95,6 @@ export default function InboxSimplified() {
   };
 
   return (
-    <AppLayout>
       <div className="h-[calc(100vh-4rem)] flex gap-4">
         {/* Left Panel: Chatrooms */}
         <Card className="w-80 flex flex-col">
@@ -292,6 +290,5 @@ export default function InboxSimplified() {
           )}
         </Card>
       </div>
-    </AppLayout>
   );
 }

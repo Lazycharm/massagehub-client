@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import AppLayout from '../../components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -156,7 +155,6 @@ export default function AdminNotifications() {
   };
 
   return (
-    <AppLayout>
       <div className="p-6">
         <div className="flex items-center justify-end gap-2 mb-6">
           <Button
@@ -349,6 +347,5 @@ export default function AdminNotifications() {
           </div>
         )}
       </div>
-    </AppLayout>
   );
 }
