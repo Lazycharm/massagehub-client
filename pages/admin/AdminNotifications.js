@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import AppLayout from '../../components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -185,7 +186,7 @@ export default function AdminNotifications() {
               <div>
                 <p className="text-sm text-yellow-900 font-medium">System Notifications Disabled</p>
                 <p className="text-xs text-yellow-700 mt-1">
-                  Enable system notifications in <a href="/admin/AdminSettings" className="underline font-medium">System Settings</a> to send notifications to users.
+                  Enable system notifications in <Link href="/admin/AdminSettings" className="underline font-medium">System Settings</Link> to send notifications to users.
                 </p>
               </div>
             </div>

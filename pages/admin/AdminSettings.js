@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { api } from '../../lib/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -464,7 +465,7 @@ export default function AdminSettings() {
                     <div>
                       <p className="text-sm text-blue-900 font-medium">Send Custom Notifications</p>
                       <p className="text-xs text-blue-700 mt-1">
-                        Visit the <a href="/admin/AdminNotifications" className="underline font-medium">Notifications Management</a> page to send custom notifications to users.
+                        Visit the <Link href="/admin/AdminNotifications" className="underline font-medium">Notifications Management</Link> page to send custom notifications to users.
                       </p>
                     </div>
                   </div>
