@@ -7,7 +7,6 @@ import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { MessageSquare, Mail, Search } from 'lucide-react';
-import { format } from 'date-fns';
 
 export default function AdminMessageLogs() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,9 +22,8 @@ export default function AdminMessageLogs() {
     .filter(m => typeFilter === 'all' || m.type === typeFilter)
     .filter(m => statusFilter === 'all' || m.status === statusFilter)
     .filter(m =>
-      m.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.phone_number?.includes(searchTerm) ||
-      m.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.to_number?.includes(searchTerm) ||
+      m.from_number?.includes(searchTerm) ||
       m.content?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -42,10 +40,6 @@ export default function AdminMessageLogs() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Message Logs</h1>
-        <p className="text-gray-500 mt-1">Complete message history and delivery status</p>
-      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -167,10 +161,10 @@ export default function AdminMessageLogs() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p className="font-medium">{message.contact_name || '-'}</p>
-                          <p className="text-xs text-gray-500">
-                            {message.phone_number || message.email || '-'}
-                          </p>
+                          <p className="font-medium">{message.direction === 'outbound' ? 'To:' : 'From:'} {message.direction === 'outbound' ? message.to_number : message.from_number}</p>
+                          {message.direction === 'outbound' && message.from_number && (
+                            <p className="text-xs text-gray-500">From: {message.from_number}</p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -185,14 +179,14 @@ export default function AdminMessageLogs() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {message.direction}
+                          {message.direction || 'outbound'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-gray-500">
-                        {message.created_by || '-'}
+                        {message.user_id ? message.user_id.substring(0, 8) + '...' : '-'}
                       </TableCell>
                       <TableCell className="text-xs text-gray-500">
-                        {message.created_date && format(new Date(message.created_date), 'MMM d, h:mm a')}
+                        {message.created_at && new Date(message.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                       </TableCell>
                     </TableRow>
                   ))

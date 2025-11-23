@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 import { getUserFromRequest, getUserChatroomIds } from '../../../lib/authMiddleware';
 
 export default async function handler(req, res) {
@@ -12,13 +12,16 @@ export default async function handler(req, res) {
 
       const { limit = 500, status, type } = req.query;
       
-      let query = supabase
+      // Use supabaseAdmin for admin users to bypass RLS
+      const client = user.role === 'admin' ? supabaseAdmin : supabase;
+      
+      let query = client
         .from('messages')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(parseInt(limit));
 
-      // Filter by user permissions
+      // Filter by user permissions (only for non-admin users)
       if (user.role !== 'admin') {
         const chatroomIds = await getUserChatroomIds(user.id, false);
         if (chatroomIds.length === 0) {
