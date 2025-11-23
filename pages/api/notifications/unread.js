@@ -16,18 +16,29 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log('[Notifications] Fetching for user:', user.id);
+    console.log('[Notifications] Fetching for user:', user.id, 'role:', user.role);
 
     // Get admin notifications for this user
-    const { data: adminNotifications, error: adminNotifError } = await supabaseAdmin
-      .from('admin_notifications')
-      .select('*')
-      .or(`target_user_id.eq.${user.id},target_role.eq.${user.role || 'user'}`)
-      .eq('is_read', false)
-      .order('created_at', { ascending: false });
+    let adminNotifications = [];
+    try {
+      const { data, error: adminNotifError } = await supabaseAdmin
+        .from('admin_notifications')
+        .select('*')
+        .or(`target_user_id.eq.${user.id},target_role.eq.${user.role || 'user'}`)
+        .eq('is_read', false)
+        .order('created_at', { ascending: false });
 
-    if (adminNotifError) {
-      console.error('[Notifications] Error fetching admin notifications:', adminNotifError);
+      if (adminNotifError) {
+        console.error('[Notifications] Error fetching admin notifications:', adminNotifError);
+        // If table doesn't exist, continue without admin notifications
+        if (adminNotifError.code !== '42P01') { // 42P01 = undefined_table
+          throw adminNotifError;
+        }
+      } else {
+        adminNotifications = data || [];
+      }
+    } catch (err) {
+      console.error('[Notifications] Admin notifications table might not exist:', err);
     }
 
     console.log('[Notifications] Admin notifications:', adminNotifications?.length || 0);
@@ -44,11 +55,37 @@ export default async function handler(req, res) {
 
     console.log('[Notifications] User chatrooms:', assignments?.length || 0);
 
-    if (!assignments || assignments.length === 0) {
+    // If no chatrooms and no admin notifications, return empty
+    if ((!assignments || assignments.length === 0) && adminNotifications.length === 0) {
+      console.log('[Notifications] No chatrooms and no admin notifications');
       return res.status(200).json({ count: 0, notifications: [] });
     }
 
-    const chatroomIds = assignments.map(a => a.chatroom_id);
+    let messages = [];
+    if (assignments && assignments.length > 0) {
+        const chatroomIds = assignments.map(a => a.chatroom_id);
+
+      // Get messages from the last 24 hours that aren't from the user
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const { data, error } = await supabaseAdmin
+        .from('messages')
+        .select('id, chatroom_id, sender, body, created_at, direction')
+        .in('chatroom_id', chatroomIds)
+        .eq('direction', 'inbound') // Only inbound messages (from customers)
+        .gte('created_at', yesterday.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('[Notifications] Error fetching messages:', error);
+      } else {
+        messages = data || [];
+      }
+
+      console.log('[Notifications] Found messages:', messages.length);
+    }
 
     // Get messages from the last 24 hours that aren't from the user
     const yesterday = new Date();
