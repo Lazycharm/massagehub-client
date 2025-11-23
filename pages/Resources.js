@@ -262,6 +262,56 @@ export default function Resources() {
     globalThis.URL.revokeObjectURL(url);
   };
 
+  // Handle CSV upload
+  const handleCsvUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target.result;
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        // Skip header row and parse CSV
+        const resources = lines.slice(1).map(line => {
+          const [phone_number, first_name, last_name, email, tags] = line.split(',').map(s => s.trim());
+          return {
+            phone_number,
+            first_name: first_name || '',
+            last_name: last_name || '',
+            email: email || '',
+            tags: tags || ''
+          };
+        }).filter(r => r.phone_number); // Only include rows with phone numbers
+
+        if (resources.length === 0) {
+          alert('No valid resources found in CSV file');
+          return;
+        }
+
+        // Use bulk import mutation
+        bulkImportMutation.mutate(resources);
+      } catch (error) {
+        alert('Error parsing CSV file: ' + error.message);
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    e.target.value = '';
+  };
+
+  // Handle add resource form submission
+  const handleAddResource = () => {
+    if (!newResource.phone_number) {
+      alert('Phone number is required');
+      return;
+    }
+
+    addResourceMutation.mutate(newResource);
+  };
+
   return (
     <AppLayout>
       <div className="p-6 max-w-full">
