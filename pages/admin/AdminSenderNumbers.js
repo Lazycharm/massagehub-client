@@ -221,7 +221,6 @@ export default function AdminSenderNumbers() {
             Add Number
           </Button>
         </div>
-      </div>
 
       {/* Search and Filters */}
       <Card className="shadow-lg">
