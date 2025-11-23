@@ -136,11 +136,7 @@ export default function AdminChatroomAccess() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Chatroom Access Control</h1>
-          <p className="text-gray-500 mt-1">Manage which users can access each chatroom</p>
-        </div>
+      <div className="flex items-center justify-end mb-6">
         <Button
           variant="outline"
           onClick={() => queryClient.invalidateQueries(['userChatroomAssignments'])}
