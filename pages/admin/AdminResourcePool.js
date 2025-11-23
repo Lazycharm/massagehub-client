@@ -401,37 +401,39 @@ export default function AdminResourcePool() {
   return (
     <AppLayout>
       <div className="p-6 max-w-full">
-        <div className="flex items-center justify-end gap-2 mb-6">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleBulkImport}
-            className="hidden"
-          />
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={bulkImportMutation.isPending}
-            title="CSV format: phone_number,label,tags,assigned_user_email,metadata"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            {bulkImportMutation.isPending ? 'Importing...' : 'Import CSV'}
-          </Button>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={() => {
-            setShowForm(!showForm);
-            if (!showForm) {
-              setEditingResource(null);
-              resetForm();
-            }
-          }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Resource
-          </Button>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleBulkImport}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={bulkImportMutation.isPending}
+              title="CSV format: phone_number,label,tags,assigned_user_email,metadata"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {bulkImportMutation.isPending ? 'Importing...' : 'Import CSV'}
+            </Button>
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button onClick={() => {
+              setShowForm(!showForm);
+              if (!showForm) {
+                setEditingResource(null);
+                resetForm();
+              }
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Resource
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
